@@ -62,6 +62,9 @@ def get_points_response(*, layers: list[str], bbox: PoiBoundingBox | None = None
                 rpps=row["rpps"],
                 adeli=row["adeli"],
                 siret=row["siret"],
+                pharmacy_establishment_id=row["pharmacy_establishment_id"],
+                pharmacist_count=row["pharmacist_count"],
+                pharmacy_type=row["pharmacy_type"],
                 last_updated_at=row["updated_at_utc"],
             ),
         )

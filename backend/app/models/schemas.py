@@ -75,6 +75,9 @@ class GeoPointProperties(BaseModel):
     rpps: str | None = None
     adeli: str | None = None
     siret: str | None = None
+    pharmacy_establishment_id: str | None = None
+    pharmacist_count: int | None = None
+    pharmacy_type: str | None = None
     last_updated_at: str | None = None
 
 
@@ -87,3 +90,62 @@ class GeoPointFeature(BaseModel):
 class GeoPointCollectionResponse(BaseModel):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     features: list[GeoPointFeature]
+
+
+class RebuildPoiResponse(BaseModel):
+    status: Literal["success"] = "success"
+    database: str
+    files_detected: int = Field(ge=0)
+    generic_files_processed: int = Field(ge=0)
+    pharmacy_files_detected: int = Field(ge=0)
+    used_specialized_pharmacy_directory: bool = False
+    generic_rows_imported: int = Field(ge=0)
+    pharmacies_imported: int = Field(ge=0)
+    pharmacists_imported: int = Field(ge=0)
+    activities_imported: int = Field(ge=0)
+    degrees_imported: int = Field(ge=0)
+    rows_rejected: int = Field(ge=0)
+    poi_rows_rebuilt: int = Field(ge=0)
+    geocoded_resolved: int = Field(ge=0)
+    geocoded_pending: int = Field(ge=0)
+    duration_ms: int = Field(ge=0)
+
+
+class PharmacyActivityResponse(BaseModel):
+    function_label: str | None = None
+    registration_date: str | None = None
+    section_code: str | None = None
+    is_primary_activity: bool = False
+
+
+class PharmacyDegreeResponse(BaseModel):
+    degree_label: str | None = None
+    degree_date: str | None = None
+    university: str | None = None
+    region: str | None = None
+
+
+class PharmacistDetailResponse(BaseModel):
+    rpps: str
+    title: str | None = None
+    last_name: str | None = None
+    first_name: str | None = None
+    first_registration_date: str | None = None
+    activities: list[PharmacyActivityResponse] = Field(default_factory=list)
+    degrees: list[PharmacyDegreeResponse] = Field(default_factory=list)
+
+
+class PharmacyDetailResponse(BaseModel):
+    establishment_id: str
+    establishment_type: str | None = None
+    display_name: str
+    legal_name: str | None = None
+    address_line_1: str | None = None
+    postal_code: str | None = None
+    city: str | None = None
+    department: str | None = None
+    region: str | None = None
+    phone: str | None = None
+    fax: str | None = None
+    pharmacist_count: int = Field(ge=0)
+    pharmacists: list[PharmacistDetailResponse] = Field(default_factory=list)

@@ -2,18 +2,23 @@
 
 import * as React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useRebuildPoi } from '@/hooks/useIndexing';
 import { usePatchSettings, useSettings } from '@/hooks/useSettings';
+import type { ReindexPoiResponse } from '@/types/api';
 
 export default function SettingsPage() {
   const settingsQuery = useSettings();
   const patchSettingsMutation = usePatchSettings();
+  const rebuildPoiMutation = useRebuildPoi();
 
   const [theme, setTheme] = React.useState<'light' | 'dark' | 'system'>('light');
   const [showLabels, setShowLabels] = React.useState(true);
   const [compactControls, setCompactControls] = React.useState(false);
   const [feedback, setFeedback] = React.useState<string | null>(null);
+  const [reindexFeedback, setReindexFeedback] = React.useState<string | null>(null);
+  const [reindexReport, setReindexReport] = React.useState<ReindexPoiResponse | null>(null);
 
   React.useEffect(() => {
     if (!settingsQuery.data) return;
@@ -33,6 +38,18 @@ export default function SettingsPage() {
       setFeedback('Paramètres enregistrés.');
     } catch {
       setFeedback('Impossible d’enregistrer pour le moment.');
+    }
+  };
+
+  const handleReindex = async () => {
+    setReindexFeedback(null);
+    try {
+      const report = await rebuildPoiMutation.mutateAsync();
+      setReindexReport(report);
+      setReindexFeedback('Réindexation terminée avec succès.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Impossible de relancer la réindexation pour le moment.';
+      setReindexFeedback(message);
     }
   };
 
@@ -86,6 +103,48 @@ export default function SettingsPage() {
             </Button>
             {feedback ? <span className="text-sm text-muted-foreground">{feedback}</span> : null}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-base">Réindexation des données</CardTitle>
+          <CardDescription>
+            Reconstruit la base `poi.sqlite` à partir des CSV disponibles et recharge la projection pharmacie enrichie.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 px-4 pb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button size="sm" onClick={handleReindex} disabled={rebuildPoiMutation.isPending}>
+              {rebuildPoiMutation.isPending ? 'Réindexation en cours…' : 'Réindexer les données'}
+            </Button>
+            {reindexFeedback ? <span className="text-sm text-muted-foreground">{reindexFeedback}</span> : null}
+          </div>
+
+          {reindexReport ? (
+            <div className="grid grid-cols-1 gap-3 rounded-md border border-input p-3 text-sm md:grid-cols-2">
+              <div>
+                <div className="font-medium text-foreground">Import métier</div>
+                <ul className="mt-1 space-y-1 text-muted-foreground">
+                  <li>{reindexReport.pharmacy_files_detected} fichier(s) pharmacie détecté(s)</li>
+                  <li>{reindexReport.pharmacies_imported} pharmacie(s) projetée(s)</li>
+                  <li>{reindexReport.pharmacists_imported} pharmacien(s) importé(s)</li>
+                  <li>{reindexReport.activities_imported} activité(s) importée(s)</li>
+                  <li>{reindexReport.degrees_imported} diplôme(s) importé(s)</li>
+                </ul>
+              </div>
+              <div>
+                <div className="font-medium text-foreground">Projection cartographique</div>
+                <ul className="mt-1 space-y-1 text-muted-foreground">
+                  <li>{reindexReport.generic_files_processed} fichier(s) CSV générique(s) traité(s)</li>
+                  <li>{reindexReport.poi_rows_rebuilt} point(s) indexé(s)</li>
+                  <li>{reindexReport.geocoded_resolved} géocodé(s) · {reindexReport.geocoded_pending} en attente</li>
+                  <li>{reindexReport.rows_rejected} ligne(s) rejetée(s)</li>
+                  <li>{Math.round(reindexReport.duration_ms / 100) / 10}s d’exécution</li>
+                </ul>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

@@ -63,6 +63,9 @@ export type GeoPointFeature = {
     rpps?: string | null;
     adeli?: string | null;
     siret?: string | null;
+    pharmacy_establishment_id?: string | null;
+    pharmacist_count?: number | null;
+    pharmacy_type?: string | null;
     last_updated_at?: string | null;
   };
 };
@@ -70,4 +73,23 @@ export type GeoPointFeature = {
 export type GeoPointCollectionResponse = {
   type: 'FeatureCollection';
   features: GeoPointFeature[];
+};
+
+export type ReindexPoiResponse = {
+  status: 'success';
+  database: string;
+  files_detected: number;
+  generic_files_processed: number;
+  pharmacy_files_detected: number;
+  used_specialized_pharmacy_directory: boolean;
+  generic_rows_imported: number;
+  pharmacies_imported: number;
+  pharmacists_imported: number;
+  activities_imported: number;
+  degrees_imported: number;
+  rows_rejected: number;
+  poi_rows_rebuilt: number;
+  geocoded_resolved: number;
+  geocoded_pending: number;
+  duration_ms: number;
 };

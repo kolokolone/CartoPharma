@@ -9,22 +9,14 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.db.poi_database import init_poi_database
-from app.services.poi_geocoding import synchronize_geocode_statuses
-from app.services.poi_import import import_csv_directory
+from app.services.poi_rebuild import rebuild_poi_database
 
 
 def main() -> int:
-    database_path = init_poi_database()
-    import_summary = import_csv_directory()
-    geocode_report = synchronize_geocode_statuses()
+    report = rebuild_poi_database()
     print(
         json.dumps(
-            {
-                "database": str(database_path),
-                "import": import_summary.__dict__,
-                "geocoding": geocode_report,
-            },
+            report.__dict__,
             ensure_ascii=True,
             indent=2,
         )

@@ -1,8 +1,9 @@
 import type {
   GeoPointCollectionResponse,
-   LayerId,
+  LayerId,
   LayersCatalogResponse,
   MapBbox,
+  ReindexPoiResponse,
   SettingsPatch,
   SettingsResponse,
 } from '@/types/api';
@@ -72,4 +73,8 @@ export const layersApi = {
     const suffix = sp.toString();
     return apiRequest<GeoPointCollectionResponse>(`/layers/points${suffix ? `?${suffix}` : ''}`);
   },
+};
+
+export const indexingApi = {
+  rebuildPoi: async () => apiRequest<ReindexPoiResponse>('/indexing/rebuild-poi', { method: 'POST' }),
 };

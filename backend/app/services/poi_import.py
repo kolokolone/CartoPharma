@@ -17,7 +17,7 @@ DEFAULT_LAYER_METADATA: dict[str, dict[str, object]] = {
         "label": "Pharmacies",
         "category": "Sante",
         "priority": 1,
-        "color": "#1d4ed8",
+        "color": "#15803d",
         "visible_by_default": 1,
     },
     "health_professionals": {
@@ -88,8 +88,8 @@ def discover_csv_files(csv_dir: Path | None = None) -> list[Path]:
     return sorted(path for path in directory.glob("*.csv") if path.is_file())
 
 
-def import_csv_directory(csv_dir: Path | None = None) -> PoiImportSummary:
-    files = discover_csv_files(csv_dir)
+def import_csv_directory(csv_dir: Path | None = None, *, exclude_layer_ids: set[str] | None = None) -> PoiImportSummary:
+    files = [path for path in discover_csv_files(csv_dir) if path.stem not in (exclude_layer_ids or set())]
     imported = 0
     rejected = 0
 

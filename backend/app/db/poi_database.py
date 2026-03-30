@@ -89,6 +89,9 @@ def init_poi_database(database_path: Path | None = None) -> Path:
                 phone TEXT,
                 website TEXT,
                 opening_hours TEXT,
+                pharmacy_establishment_id TEXT,
+                pharmacist_count INTEGER NOT NULL DEFAULT 0,
+                pharmacy_type TEXT,
                 latitude REAL,
                 longitude REAL,
                 geocode_status TEXT NOT NULL DEFAULT 'pending',
@@ -105,9 +108,82 @@ def init_poi_database(database_path: Path | None = None) -> Path:
             )
             """
         )
+        _ensure_column(connection, "poi", "pharmacy_establishment_id", "TEXT")
+        _ensure_column(connection, "poi", "pharmacist_count", "INTEGER NOT NULL DEFAULT 0")
+        _ensure_column(connection, "poi", "pharmacy_type", "TEXT")
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pharmacy_establishment (
+                establishment_id TEXT PRIMARY KEY,
+                establishment_type TEXT,
+                display_name TEXT NOT NULL,
+                legal_name TEXT,
+                address_line_1 TEXT,
+                postal_code TEXT,
+                city TEXT,
+                department TEXT,
+                region TEXT,
+                phone TEXT,
+                fax TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at_utc TEXT NOT NULL,
+                updated_at_utc TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pharmacist (
+                rpps TEXT PRIMARY KEY,
+                title TEXT,
+                last_name TEXT,
+                first_name TEXT,
+                first_registration_date TEXT,
+                created_at_utc TEXT NOT NULL,
+                updated_at_utc TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pharmacist_activity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                rpps TEXT NOT NULL,
+                establishment_id TEXT NOT NULL,
+                function_label TEXT,
+                registration_date TEXT,
+                section_code TEXT,
+                is_primary_activity INTEGER NOT NULL DEFAULT 0,
+                created_at_utc TEXT NOT NULL,
+                updated_at_utc TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pharmacist_degree (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                rpps TEXT NOT NULL,
+                degree_label TEXT,
+                degree_date TEXT,
+                university TEXT,
+                region TEXT,
+                created_at_utc TEXT NOT NULL,
+                updated_at_utc TEXT NOT NULL
+            )
+            """
+        )
         connection.execute("CREATE INDEX IF NOT EXISTS idx_poi_layer_id ON poi(layer_id)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_poi_is_active ON poi(is_active)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_poi_geocode_status ON poi(geocode_status)")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_poi_pharmacy_establishment_id ON poi(pharmacy_establishment_id)"
+        )
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_pharmacist_activity_rpps ON pharmacist_activity(rpps)")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_pharmacist_activity_establishment_id ON pharmacist_activity(establishment_id)"
+        )
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_pharmacist_degree_rpps ON pharmacist_degree(rpps)")
         connection.execute(
             """
             CREATE VIRTUAL TABLE IF NOT EXISTS poi_rtree USING rtree(
@@ -139,3 +215,13 @@ def rebuild_poi_rtree(database_path: Path | None = None) -> int:
         connection.commit()
 
     return int(inserted)
+
+
+def _ensure_column(connection: sqlite3.Connection, table_name: str, column_name: str, definition: str) -> None:
+    existing_columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    }
+    if column_name in existing_columns:
+        return
+    connection.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")

@@ -9,45 +9,86 @@ import unittest
 
 from fastapi import HTTPException
 
+from app.api.routes.indexing import rebuild_poi_route
 from app.api.routes.layers import get_layer_points
+from app.api.routes.pharmacies import get_pharmacy_detail_route
 from app.db.poi_database import connect_poi, init_poi_database
 from app.db.poi_repository import PoiBoundingBox, list_poi_layers, list_poi_points
-from app.services.poi_geocoding import synchronize_geocode_statuses
-from app.services.poi_import import import_csv_directory
+from app.services.poi_rebuild import rebuild_poi_database
+
+
+def write_utf16le_csv(path: Path, content: str) -> None:
+    path.write_bytes(content.replace("\n", "\r\n").encode("utf-16-le"))
 
 
 class PoiPipelineTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.temp_dir = TemporaryDirectory()
+        self.temp_dir = TemporaryDirectory(ignore_cleanup_errors=True)
         self.addCleanup(self.temp_dir.cleanup)
         self.data_dir = Path(self.temp_dir.name)
         os.environ["CARTOPHARMA_DATA_DIR"] = str(self.data_dir)
         self.addCleanup(lambda: os.environ.pop("CARTOPHARMA_DATA_DIR", None))
         csv_dir = self.data_dir / "csv"
         csv_dir.mkdir(parents=True, exist_ok=True)
-        (csv_dir / "pharmacies.csv").write_text(
-            "source_record_id,name,address_line_1,postal_code,city,latitude,longitude,phone\n"
-            "pharm-1,Pharmacie Test,1 rue de Paris,75001,Paris,48.8566,2.3522,0102030405\n"
-            "pharm-2,Pharmacie Lille,2 place du Theatre,59000,Lille,50.6292,3.0573,0203040506\n",
+        (csv_dir / "pharmacies.csv").write_text("legacy file that must be ignored\n", encoding="utf-8")
+        (csv_dir / "shops.csv").write_text(
+            "source_record_id,name,address_line_1,postal_code,city,latitude,longitude\n"
+            "shop-1,Commerce Test,5 place du Marche,33000,Bordeaux,44.8378,-0.5792\n",
             encoding="utf-8",
         )
 
-    def test_builds_catalog_and_bbox_filtered_points(self) -> None:
-        init_poi_database()
-        summary = import_csv_directory()
-        geocode_report = synchronize_geocode_statuses()
+        pharmacy_dir = csv_dir / "pharmacies"
+        pharmacy_dir.mkdir(parents=True, exist_ok=True)
+        write_utf16le_csv(
+            pharmacy_dir / "etablissements_2026-03-30_03-31-31.csv",
+            "Numéro d'établissement;Type établissement;Dénomination commerciale;Raison sociale;Adresse;Code postal;Commune;Département;Région;Téléphone;Fax;Latitude;Longitude;Site web;Horaires;Siret\n"
+            "ETAB-001;Officine;Pharmacie du Centre;Pharmacie du Centre SARL;1 rue de Paris;75001;Paris;75;Ile-de-France;0102030405;0102030406;48.8566;2.3522;https://example.org/pharm1;Mo-Sa 09:00-19:00;11111111111111\n"
+            "ETAB-002;Officine;Pharmacie du Nord;Pharmacie du Nord SARL;2 place du Theatre;59000;Lille;59;Hauts-de-France;0203040506;0203040507;50.6292;3.0573;https://example.org/pharm2;Mo-Sa 08:30-19:30;22222222222222\n",
+        )
+        write_utf16le_csv(
+            pharmacy_dir / "pharmaciens_2026-03-30_03-31-31.csv",
+            "n° RPPS;Titre;Nom d'exercice;Prénom;Date de première inscription\n"
+            "RPPS-001;Dr;Martin;Alice;2015-01-01\n"
+            "RPPS-002;Dr;Durand;Bruno;2016-06-15\n"
+            "RPPS-003;Dr;Petit;Claire;2018-09-20\n",
+        )
+        write_utf16le_csv(
+            pharmacy_dir / "activites_2026-03-30_03-31-31.csv",
+            "n° RPPS pharmacien;Numéro d'établissement;Fonction;Date d'inscription;Section;Activité principale\n"
+            "RPPS-001;ETAB-001;Titulaire;2020-01-01;A;Oui\n"
+            "RPPS-002;ETAB-001;Adjoint;2021-02-01;A;Non\n"
+            "RPPS-002;ETAB-002;Titulaire;2022-03-01;B;Oui\n"
+            "RPPS-003;ETAB-002;Adjoint;2023-04-01;B;Non\n",
+        )
+        write_utf16le_csv(
+            pharmacy_dir / "diplomes_2026-03-30_03-31-31.csv",
+            "n° RPPS pharmacien;Diplôme;Date d'obtention;Université;Region\n"
+            "RPPS-001;Doctorat pharmacie;2014-01-01;Paris Cité;Ile-de-France\n"
+            "RPPS-002;Doctorat pharmacie;2015-01-01;Lille;Hauts-de-France\n"
+            "RPPS-003;DU Orthopedie;2019-01-01;Lille;Hauts-de-France\n",
+        )
 
-        self.assertEqual(summary.files_processed, 1)
-        self.assertEqual(summary.rows_imported, 2)
-        self.assertEqual(summary.rows_rejected, 0)
-        self.assertEqual(geocode_report["resolved"], 2)
+    def test_rebuilds_catalog_with_specialized_pharmacy_directory(self) -> None:
+        init_poi_database()
+        report = rebuild_poi_database()
+
+        self.assertTrue(report.used_specialized_pharmacy_directory)
+        self.assertEqual(report.pharmacy_files_detected, 4)
+        self.assertEqual(report.generic_files_processed, 1)
+        self.assertEqual(report.pharmacies_imported, 2)
+        self.assertEqual(report.pharmacists_imported, 3)
+        self.assertEqual(report.activities_imported, 4)
+        self.assertEqual(report.degrees_imported, 3)
+        self.assertEqual(report.rows_rejected, 0)
+        self.assertEqual(report.geocoded_resolved, 3)
 
         layers = list_poi_layers()
-        self.assertEqual(len(layers), 1)
-        self.assertEqual(layers[0]["id"], "pharmacies")
+        self.assertEqual([layer["id"] for layer in layers], ["pharmacies", "shops"])
 
         all_points = list_poi_points(layers=["pharmacies"])
         self.assertEqual(len(all_points), 2)
+        self.assertEqual(all_points[0]["pharmacist_count"], 2)
+        self.assertIsNotNone(all_points[0]["pharmacy_establishment_id"])
 
         bbox_points = list_poi_points(
             layers=["pharmacies"],
@@ -58,20 +99,61 @@ class PoiPipelineTests(unittest.TestCase):
 
         with closing(connect_poi()) as connection:
             indexed = connection.execute("SELECT COUNT(*) AS count FROM poi_rtree").fetchone()["count"]
-        self.assertEqual(indexed, 2)
+        self.assertEqual(indexed, 3)
 
-    def test_layers_points_route_validates_bbox_and_filters_results(self) -> None:
+    def test_routes_expose_enriched_pharmacy_payloads(self) -> None:
         init_poi_database()
-        import_csv_directory()
-        synchronize_geocode_statuses()
+        rebuild_poi_database()
 
         response = asyncio.run(get_layer_points(layers=['pharmacies'], bbox='2.0,48.0,2.5,49.0'))
         self.assertEqual(len(response.features), 1)
         self.assertEqual(response.features[0].properties.city, 'Paris')
+        self.assertEqual(response.features[0].properties.pharmacist_count, 2)
+        self.assertEqual(response.features[0].properties.pharmacy_establishment_id, 'ETAB-001')
 
         with self.assertRaises(HTTPException) as context:
             asyncio.run(get_layer_points(layers=['pharmacies'], bbox='oops'))
         self.assertEqual(context.exception.status_code, 422)
+
+        detail = asyncio.run(get_pharmacy_detail_route('ETAB-001'))
+        self.assertEqual(detail.display_name, 'Pharmacie du Centre')
+        self.assertEqual(detail.pharmacist_count, 2)
+        self.assertEqual(len(detail.pharmacists), 2)
+        self.assertEqual(detail.pharmacists[0].activities[0].function_label, 'Adjoint')
+
+    def test_rebuild_endpoint_returns_structured_report(self) -> None:
+        init_poi_database()
+
+        response = asyncio.run(rebuild_poi_route())
+
+        self.assertEqual(response.status, 'success')
+        self.assertEqual(response.pharmacy_files_detected, 4)
+        self.assertEqual(response.pharmacies_imported, 2)
+        self.assertEqual(response.poi_rows_rebuilt, 3)
+
+    def test_legacy_root_pharmacies_csv_is_ignored(self) -> None:
+        init_poi_database()
+
+        report = rebuild_poi_database()
+
+        self.assertEqual(report.generic_files_processed, 1)
+        layers = list_poi_layers()
+        self.assertEqual([layer['id'] for layer in layers], ['pharmacies', 'shops'])
+
+    def test_rebuild_removes_stale_layers_when_csv_disappears(self) -> None:
+        init_poi_database()
+        first_report = rebuild_poi_database()
+        self.assertEqual(first_report.poi_rows_rebuilt, 3)
+
+        (self.data_dir / 'csv' / 'shops.csv').unlink()
+
+        second_report = rebuild_poi_database()
+
+        self.assertEqual(second_report.generic_files_processed, 0)
+        layers = list_poi_layers()
+        self.assertEqual([layer['id'] for layer in layers], ['pharmacies'])
+        all_points = list_poi_points(layers=['pharmacies'])
+        self.assertEqual(len(all_points), 2)
 
 
 if __name__ == "__main__":

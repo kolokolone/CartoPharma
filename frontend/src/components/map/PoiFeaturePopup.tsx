@@ -21,6 +21,7 @@ function renderMeta(label: string, value?: string | number | null) {
 
 export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
   const { properties } = feature;
+  const isPharmacy = properties.layer === 'pharmacies';
   const title = properties.display_name ?? properties.name;
   const addressLines = [properties.address_line_1, properties.address_line_2].filter(
     (line): line is string => Boolean(line)
@@ -44,6 +45,15 @@ export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
       </div>
 
       <div className="space-y-1.5 border-t pt-3">
+        {isPharmacy ? (
+          <div className="space-y-1 rounded-md bg-accent/30 p-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/80">Pharmaciens</div>
+            <div className="text-sm text-foreground">
+              Total : <span className="font-semibold">{properties.pharmacist_count ?? 0}</span>
+            </div>
+            {properties.pharmacy_type ? <div className="text-xs text-muted-foreground">Type : {properties.pharmacy_type}</div> : null}
+          </div>
+        ) : null}
         {renderMeta('Telephone', properties.phone)}
         {properties.website ? (
           <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 text-xs text-muted-foreground">
@@ -57,8 +67,8 @@ export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
         {renderMeta('RPPS', properties.rpps)}
         {renderMeta('ADELI', properties.adeli)}
         {renderMeta('SIRET', properties.siret)}
-        {renderMeta('Source', properties.source_name)}
-        {renderMeta('Geocodage', properties.geocode_status)}
+        {!isPharmacy ? renderMeta('Source', properties.source_name) : null}
+        {!isPharmacy ? renderMeta('Geocodage', properties.geocode_status) : null}
       </div>
     </div>
   );

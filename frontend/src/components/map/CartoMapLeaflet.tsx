@@ -11,7 +11,7 @@ import type { GeoPointFeature, LayerId, MapBbox } from '@/types/api';
 const FRANCE_CENTER: [number, number] = [46.603354, 1.888334];
 
 const LAYER_COLORS: Record<string, string> = {
-  pharmacies: '#1d4ed8',
+  pharmacies: '#15803d',
   health_professionals: '#0f766e',
   public_transport: '#7c3aed',
   shops: '#c2410c',
