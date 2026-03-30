@@ -1,0 +1,7 @@
+Liste courte des donnees exposees
+
+- statut applicatif
+- statut sante / healthcheck
+- preferences d interface
+- catalogue de couches
+- points cartographiques mockes par couche

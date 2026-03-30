@@ -1,0 +1,17 @@
+CartoPharma - Cahier des charges synthétique
+
+Perimetre : France uniquement.
+Objectif : application cartographique sante/services inspiree du shell et de la qualite percue du projet de reference.
+
+Fondation attendue :
+- backend FastAPI
+- frontend Next.js
+- routes : /, /map, /settings
+- carte interactive fonctionnelle
+- architecture de couches extensible
+- documentation et scripts de lancement coherents
+- base SQLite dediee au projet
+
+Exclusions de cette phase :
+- zone de chalandise
+- logique metier avancee complete

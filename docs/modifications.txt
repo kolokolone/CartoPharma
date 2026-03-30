@@ -1,0 +1,9 @@
+Modifications effectuees sur la phase de verification CartoPharma
+
+- ajout du dossier `data/`
+- ajout de `data/cartopharma.sqlite` via initialisation backend
+- persistance SQLite pour les settings
+- ajout de `run_win.bat`, `start_backend.bat`, `start_frontend.bat`, `run_linux.sh`
+- ajout d un `Dockerfile` multi-stage coherent frontend/backend
+- ajout et adaptation du dossier `docs/`
+- suppression des references residuelles au projet source dans les fichiers produits

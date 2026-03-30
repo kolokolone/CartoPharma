@@ -1,0 +1,10 @@
+Implementations a faire - phase suivante
+
+- branchement de donnees reelles pour les pharmacies
+- priorisation visuelle des pharmacies
+- ajout des autres professionnels de sante
+- ajout des transports publics
+- ajout des commerces et points d interet
+- persistance de preferences cartographiques plus riche
+- filtres multi-criteres et legendes
+- tests automatises frontend/backend
