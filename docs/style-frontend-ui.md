@@ -23,9 +23,11 @@ Fichiers structurants :
 - `frontend/src/components/layout/NavItem.tsx`
 - `frontend/src/components/layout/TopHeader.tsx`
 - `frontend/src/components/layout/PageContainer.tsx`
+- `frontend/src/components/map/PoiFeaturePopup.tsx`
 - `frontend/src/components/layout/nav.ts`
 - `frontend/src/components/layout/page-metadata.tsx`
 - `frontend/src/components/layout/HeaderActions.tsx`
+- `frontend/src/lib/app-version.ts`
 - `frontend/src/app/globals.css`
 - `frontend/src/app/layout.tsx`
 
@@ -84,7 +86,8 @@ Structure :
 - colonne droite : header sticky + contenu scrollable
 
 Valeurs retenues :
-- largeur sidebar desktop : `260px`
+- largeur sidebar desktop ouverte : `220px`
+- largeur sidebar desktop reduite : `3.5rem`
 - hauteur shell : `h-screen`
 - scroll principal : `main`
 - scroll sidebar : interne
@@ -94,6 +97,12 @@ Sidebar :
 - nav principale
 - nav footer
 - item actif lisible avec fond accent + indicateur vertical primaire
+- bouton de reduction en haut a droite sur desktop
+- mode reduit desktop :
+  - aucun bloc branding texte
+  - bouton de reouverture en haut
+  - navigation principale et secondaire conservees en dessous
+  - items affiches en icones seules avec `title` / `aria-label`
 
 TopHeader :
 - sticky unique
@@ -156,10 +165,15 @@ Regles :
 - panneau de couches dans une `Card`
 - architecture prete pour pharmacies, professionnels de sante, transports, commerces, points d interet
 - aucune zone de chalandise dans cette phase
+- popup pharmacie :
+  - `Pharmaciens` affiche le total sur une ligne de metadonnees au meme format que `Telephone`
+  - `Type` pharmacie affiche sur une ligne de metadonnees simple
+  - `Site` ne doit rendre qu un lien `http/https`
 
 ### `/settings`
 - reglages d affichage et de comportement cartographique
 - champs simples, lisibles, coherents avec les primitives UI
+- version applicative visible tout en haut a gauche, au-dessus des cartes de reglage
 
 Regles communes :
 - wrapper metier `div.space-y-4`
@@ -173,9 +187,11 @@ Regles communes :
 Checklist minimale :
 - focus visible sur boutons et items de nav
 - `aria-label` sur bouton menu mobile
+- `aria-label="Navigation"` sur le drawer mobile en mode dialogue
 - structure semantique `header`, `main`, `nav`
 - navigation clavier possible
 - pas de zoom horizontal impose
+- en mode sidebar reduite, les icones restent navigables sans texte visible grace a `title` et `aria-label`
 
 ---
 
@@ -185,6 +201,9 @@ Checklist minimale :
 - [ ] Navigation centralisee via `nav.ts`
 - [ ] Titre/subtitle centralises via `page-metadata.tsx`
 - [ ] Pas de duplication header/container
+- [ ] La sidebar desktop peut se reduire et se reouvrir proprement
+- [ ] La sidebar reduite conserve les icones de navigation sous le bouton d ouverture
 - [ ] La carte `/map` est fonctionnelle
 - [ ] Les couches peuvent etre activees/desactivees
+- [ ] Le popup pharmacie affiche les metadonnees cles avec le meme rythme visuel que les autres lignes
 - [ ] Le rendu reste sobre, lisible, reactif et professionnel

@@ -6,14 +6,17 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import Mock, patch
 
 from fastapi import HTTPException
 
 from app.api.routes.indexing import rebuild_poi_route
 from app.api.routes.layers import get_layer_points
 from app.api.routes.pharmacies import get_pharmacy_detail_route
+from app.db.database import utc_now_iso
 from app.db.poi_database import connect_poi, init_poi_database
 from app.db.poi_repository import PoiBoundingBox, list_poi_layers, list_poi_points
+from app.services.poi_geocoding import synchronize_geocode_statuses
 from app.services.poi_rebuild import rebuild_poi_database
 
 
@@ -154,6 +157,87 @@ class PoiPipelineTests(unittest.TestCase):
         self.assertEqual([layer['id'] for layer in layers], ['pharmacies'])
         all_points = list_poi_points(layers=['pharmacies'])
         self.assertEqual(len(all_points), 2)
+
+    @patch('app.services.poi_geocoding.requests.post')
+    def test_batch_geocoding_resolves_pending_points(self, requests_post: Mock) -> None:
+        init_poi_database()
+        timestamp = utc_now_iso()
+
+        with closing(connect_poi()) as connection:
+            connection.execute(
+                """
+                INSERT INTO poi_layer (id, label, category, priority, color, visible_by_default, is_active, source_status, updated_at_utc)
+                VALUES ('pharmacies', 'Pharmacies', 'Sante', 1, '#15803d', 1, 1, 'imported', ?)
+                """,
+                (timestamp,),
+            )
+            cursor = connection.execute(
+                """
+                INSERT INTO poi (
+                    source_name, source_record_id, layer_id, name, display_name, address_line_1, postal_code, city,
+                    department_code, region, country_code, phone, website, opening_hours, pharmacy_establishment_id,
+                    pharmacist_count, pharmacy_type, latitude, longitude, geocode_status, geocode_score,
+                    geocode_provider, raw_address, normalized_address, is_active, last_seen_at_utc, created_at_utc, updated_at_utc
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+                """,
+                (
+                    'pharmacy_directory',
+                    'ETAB-XYZ',
+                    'pharmacies',
+                    'Pharmacie Test',
+                    'Pharmacie Test',
+                    '37 BIS RUE DE PENTHIEVRE',
+                    '22120',
+                    'YFFINIAC',
+                    "COTES D'ARMOR",
+                    'REGION BRETAGNE',
+                    'FR',
+                    '0296726692',
+                    None,
+                    None,
+                    'ETAB-XYZ',
+                    3,
+                    'OFFICINE',
+                    None,
+                    None,
+                    'pending',
+                    None,
+                    None,
+                    '37 BIS RUE DE PENTHIEVRE, 22120 YFFINIAC',
+                    '37 BIS RUE DE PENTHIEVRE, 22120 YFFINIAC',
+                    timestamp,
+                    timestamp,
+                    timestamp,
+                ),
+            )
+            poi_id = cursor.lastrowid
+            connection.commit()
+
+        requests_post.return_value = Mock(
+            status_code=200,
+            text=(
+                'poi_id,address_line_1,postal_code,city,longitude,latitude,result_score,result_status\n'
+                f'{poi_id},37 BIS RUE DE PENTHIEVRE,22120,YFFINIAC,-2.673841,48.481279,0.8476,ok\n'
+            ),
+        )
+        requests_post.return_value.raise_for_status = Mock()
+
+        report = synchronize_geocode_statuses()
+
+        self.assertEqual(report['resolved'], 1)
+        self.assertEqual(report['pending'], 0)
+        self.assertEqual(report['indexed_rows'], 1)
+
+        with closing(connect_poi()) as connection:
+            row = connection.execute(
+                "SELECT latitude, longitude, geocode_status, geocode_provider FROM poi WHERE id = ?",
+                (poi_id,),
+            ).fetchone()
+
+        self.assertAlmostEqual(row['latitude'], 48.481279)
+        self.assertAlmostEqual(row['longitude'], -2.673841)
+        self.assertEqual(row['geocode_status'], 'resolved')
+        self.assertEqual(row['geocode_provider'], 'geoplateforme_search_csv')
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ Le depot contient un backend FastAPI, un frontend Next.js et une base SQLite run
 
 ## Statut actuel
 
-- version courante : `0.1.3`
+- version courante : `0.1.4`
 - perimetre : France uniquement
 - socle fonctionnel disponible : frontend, backend, carte Leaflet, couches activables, settings persistants
 - indexation metier disponible : lot pharmacie specialise + projection cartographique enrichie
@@ -163,7 +163,7 @@ Routes frontend :
 
 ## Limites actuelles
 
-- geocodage adresse complet non inclus : les pharmacies sans coordonnees restent en attente
+- geocodage d'adresse batch via la Geoplateforme pour les lignes sans coordonnees source
 - pas de calcul de zone de chalandise
 - pas encore de page frontend `/pharmacie/[id]`
 - les autres couches restent encore largement en base mockee pour la V1 fondation

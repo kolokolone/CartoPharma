@@ -21,6 +21,7 @@ function formatTodayLabel() {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname() ?? '/';
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = React.useState(false);
 
   const pageMetadata = React.useMemo(() => resolvePageMetadata(pathname), [pathname]);
   const HeaderActions = pageMetadata.HeaderActions;
@@ -47,9 +48,16 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="h-screen overflow-hidden bg-background text-foreground">
-      <div className="grid h-full md:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="hidden h-screen overflow-y-auto border-r border-border md:block">
-          <Sidebar pathname={pathname} />
+      <div
+        className="grid h-full md:[grid-template-columns:var(--sidebar-width)_minmax(0,1fr)]"
+        style={{ ['--sidebar-width' as string]: desktopSidebarCollapsed ? '3.5rem' : '13.75rem' }}
+      >
+        <aside className="hidden h-screen border-r border-border md:block">
+          <Sidebar
+            pathname={pathname}
+            collapsed={desktopSidebarCollapsed}
+            onToggleCollapse={() => setDesktopSidebarCollapsed((current) => !current)}
+          />
         </aside>
 
         <div className="flex min-h-0 flex-col">
@@ -68,7 +76,7 @@ export function AppShell({ children }: AppShellProps) {
       </div>
 
       {mobileSidebarOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <button
             type="button"
             className="absolute inset-0 bg-black/45"

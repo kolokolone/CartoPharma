@@ -254,17 +254,25 @@ Chaque établissement valide génère une ligne dans `poi` avec :
 - `pharmacist_count`
 - `pharmacy_type`
 - les champs adresse/ville/région/téléphone
-- des coordonnées uniquement si elles sont présentes dans l'export source
+- des coordonnées soit présentes dans l'export source, soit calculées ensuite par géocodage batch
 
 ### 6.3 Géocodage
 
-Le projet ne fait pas encore de géocodage d'adresse externe dans ce pipeline.
+Le pipeline déclenche un géocodage batch via le service public de géocodage de la Géoplateforme.
 
 Conséquence :
 
 - si l'export fournit `latitude`/`longitude`, l'établissement est `resolved` ;
-- sinon il reste `pending` ;
+- sinon, si l'adresse est exploitable (`address_line_1`, `postal_code`, `city`), la ligne est envoyée à `https://data.geopf.fr/geocodage/search/csv` ;
+- si la Géoplateforme retourne des coordonnées, elles sont écrites dans `poi.latitude` / `poi.longitude` avec `geocode_provider = geoplateforme_search_csv` ;
+- sinon la ligne reste `pending` ;
 - un établissement sans coordonnées est bien importé métier, mais n'entre pas dans `poi_rtree`.
+
+### 6.3.1 Paramètres de géocodage
+
+- `CARTOPHARMA_ENABLE_BATCH_GEOCODING` : active/désactive le géocodage batch (`1` par défaut)
+- `CARTOPHARMA_GEOCODING_API_URL` : URL de base du service (`https://data.geopf.fr/geocodage` par défaut)
+- `CARTOPHARMA_GEOCODING_BATCH_SIZE` : taille des lots envoyés à l'API (`5000` par défaut)
 
 ### 6.4 Index spatial
 
@@ -293,7 +301,7 @@ Cela signifie :
 5. purge du domaine pharmacie ;
 6. réimport du lot spécialisé pharmacie ;
 7. réimport des CSV génériques restants ;
-8. recalcul des statuts de géocodage ;
+8. géocodage batch des lignes sans coordonnées puis recalcul des statuts de géocodage ;
 9. reconstruction de `poi_rtree`.
 
 Le rapport renvoyé au frontend sépare :

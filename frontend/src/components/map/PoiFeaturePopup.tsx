@@ -6,6 +6,24 @@ type PoiFeaturePopupProps = {
   feature: GeoPointFeature;
 };
 
+function getSafeWebsiteUrl(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const candidate = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 function renderMeta(label: string, value?: string | number | null) {
   if (value === undefined || value === null || value === '') {
     return null;
@@ -27,6 +45,7 @@ export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
     (line): line is string => Boolean(line)
   );
   const cityLine = [properties.postal_code, properties.city].filter(Boolean).join(' ');
+  const safeWebsiteUrl = getSafeWebsiteUrl(properties.website);
 
   return (
     <div className="min-w-[220px] space-y-3 text-sm">
@@ -35,8 +54,8 @@ export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
           {properties.layer_label ?? properties.layer.replaceAll('_', ' ')}
         </div>
         <div className="font-semibold text-foreground">{title}</div>
-        {addressLines.map((line) => (
-          <div key={line} className="text-muted-foreground">
+        {addressLines.map((line, index) => (
+          <div key={`${line}-${index}`} className="text-muted-foreground">
             {line}
           </div>
         ))}
@@ -45,20 +64,13 @@ export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
       </div>
 
       <div className="space-y-1.5 border-t pt-3">
-        {isPharmacy ? (
-          <div className="space-y-1 rounded-md bg-accent/30 p-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/80">Pharmaciens</div>
-            <div className="text-sm text-foreground">
-              Total : <span className="font-semibold">{properties.pharmacist_count ?? 0}</span>
-            </div>
-            {properties.pharmacy_type ? <div className="text-xs text-muted-foreground">Type : {properties.pharmacy_type}</div> : null}
-          </div>
-        ) : null}
+        {isPharmacy ? renderMeta('Pharmaciens', properties.pharmacist_count ?? 0) : null}
+        {isPharmacy ? renderMeta('Type', properties.pharmacy_type) : null}
         {renderMeta('Telephone', properties.phone)}
-        {properties.website ? (
+        {safeWebsiteUrl ? (
           <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 text-xs text-muted-foreground">
             <span className="font-medium text-foreground/80">Site</span>
-            <a className="break-all text-primary underline-offset-2 hover:underline" href={properties.website} target="_blank" rel="noreferrer">
+            <a className="break-all text-primary underline-offset-2 hover:underline" href={safeWebsiteUrl} target="_blank" rel="noreferrer">
               {properties.website}
             </a>
           </div>

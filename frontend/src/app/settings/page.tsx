@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useRebuildPoi } from '@/hooks/useIndexing';
 import { usePatchSettings, useSettings } from '@/hooks/useSettings';
+import { APP_VERSION } from '@/lib/app-version';
 import type { ReindexPoiResponse } from '@/types/api';
 
 export default function SettingsPage() {
@@ -55,6 +56,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4 px-1">
+        <div className="text-sm text-muted-foreground">
+          Version <span className="font-medium text-foreground">{APP_VERSION}</span>
+        </div>
+      </div>
+
       <Card>
         <CardHeader className="px-4 py-3">
           <CardTitle className="text-base">Préférences d’interface</CardTitle>

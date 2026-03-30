@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 APP_NAME = "CartoPharma API"
-APP_VERSION = "0.1.3"
+APP_VERSION = "0.1.4"
 
 
 def get_project_root() -> Path:
@@ -55,3 +55,22 @@ def ensure_runtime_dirs() -> None:
 def get_cors_origins() -> list[str]:
     raw = os.getenv("CARTOPHARMA_CORS_ORIGINS", "http://localhost:3000,http://localhost:3001")
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def is_batch_geocoding_enabled() -> bool:
+    raw = os.getenv("CARTOPHARMA_ENABLE_BATCH_GEOCODING", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def get_geocoding_api_base_url() -> str:
+    raw = os.getenv("CARTOPHARMA_GEOCODING_API_URL", "https://data.geopf.fr/geocodage").strip()
+    return raw.rstrip("/")
+
+
+def get_geocoding_batch_size() -> int:
+    raw = os.getenv("CARTOPHARMA_GEOCODING_BATCH_SIZE", "5000").strip()
+    try:
+        value = int(raw)
+    except ValueError:
+        return 5000
+    return max(1, min(value, 200_000))
