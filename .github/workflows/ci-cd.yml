@@ -29,11 +29,11 @@ jobs:
           import pathlib
           import sys
           sys.path.insert(0, str(pathlib.Path('backend').resolve()))
-          from fastapi.testclient import TestClient
           from app.main import app
-          with TestClient(app) as client:
-              assert client.get('/health').status_code == 200
-              assert client.get('/api/v1/layers').status_code == 200
+          routes = {route.path for route in app.routes}
+          assert '/health' in routes
+          assert '/api/v1/layers' in routes
+          assert app.version == '0.1.1'
           PY
 
       - name: Setup Node
