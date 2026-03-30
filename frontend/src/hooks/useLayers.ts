@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { layersApi } from '@/lib/api';
-import type { LayerId } from '@/types/api';
+import type { LayerId, MapBbox } from '@/types/api';
 
 const layersCatalogKey = ['layers', 'catalog'];
 
@@ -13,10 +13,16 @@ export function useLayersCatalog() {
   });
 }
 
-export function useLayerPoints(activeLayers: LayerId[]) {
+type UseLayerPointsOptions = {
+  layers: LayerId[];
+  bbox?: MapBbox | null;
+};
+
+export function useLayerPoints({ layers, bbox }: UseLayerPointsOptions) {
   return useQuery({
-    queryKey: ['layers', 'points', ...activeLayers],
-    queryFn: () => layersApi.points(activeLayers),
+    queryKey: ['layers', 'points', ...layers, ...(bbox ?? [])],
+    queryFn: () => layersApi.points(layers, bbox),
+    enabled: layers.length > 0,
     staleTime: 60_000,
   });
 }

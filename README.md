@@ -5,7 +5,7 @@ Le depot contient un backend FastAPI, un frontend Next.js et une base SQLite run
 
 ## Statut actuel
 
-- version courante : `0.1.1`
+- version courante : `0.1.2`
 - perimetre : France uniquement
 - socle fonctionnel disponible : frontend, backend, carte Leaflet, couches activables, settings persistants
 - donnees metier reelles : non branchees pour le moment
@@ -16,6 +16,7 @@ Le depot contient un backend FastAPI, un frontend Next.js et une base SQLite run
 - endpoints de statut et de sante
 - catalogue de couches cartographiques
 - exposition de points GeoJSON mockes
+- pipeline POI CSV -> SQLite dedie avec index spatial RTree
 - persistance SQLite des settings d affichage
 - page d accueil `/`
 - page carte `/map`
@@ -27,6 +28,7 @@ Le depot contient un backend FastAPI, un frontend Next.js et une base SQLite run
 - `backend/` : API FastAPI, schemas, routes, acces SQLite
 - `frontend/` : application Next.js App Router
 - `data/` : base SQLite, logs et fichiers runtime
+- `data/csv/` : depot des CSV POI bruts pour l import offline
 - `docs/` : documentation interne et runbooks
 - `Dockerfile` : build applicatif pour execution conteneurisee
 
@@ -127,9 +129,18 @@ Routes frontend :
 ## Donnees et base de donnees
 
 - base par defaut : `data/cartopharma.sqlite`
+- base POI dediee : `data/poi.sqlite`
 - logs backend : `data/logs/`
 - repertoires runtime : `data/layers/`, `data/tmp/`
 - points exposes : actuellement mockes
+
+## Pipeline POI MVP
+
+- le schema POI est initialise dans `data/poi.sqlite`
+- les CSV bruts sont lus depuis `data/csv/`
+- le script `python backend/scripts/build_poi_database.py` construit la base POI et l index spatial
+- l API `/api/v1/layers/points` accepte maintenant `bbox=minLon,minLat,maxLon,maxLat`
+- si `poi.sqlite` ne contient aucune couche active, le backend conserve un fallback mock
 
 ## Documentation disponible
 

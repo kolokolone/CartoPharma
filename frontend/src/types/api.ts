@@ -1,4 +1,6 @@
-export type LayerId = 'pharmacies' | 'health_professionals' | 'public_transport' | 'shops' | 'points_of_interest';
+export type LayerId = string;
+
+export type MapBbox = [number, number, number, number];
 
 export type SettingsResponse = {
   country_scope: 'FRANCE';
@@ -20,6 +22,8 @@ export type LayerDefinition = {
   color: string;
   priority: number;
   visible_by_default: boolean;
+  source_status?: string | null;
+  updated_at_utc?: string | null;
 };
 
 export type LayersCatalogResponse = {
@@ -38,6 +42,28 @@ export type GeoPointFeature = {
     layer: LayerId;
     name: string;
     city: string;
+    layer_label?: string | null;
+    layer_color?: string | null;
+    display_name?: string | null;
+    address_line_1?: string | null;
+    address_line_2?: string | null;
+    postal_code?: string | null;
+    department_code?: string | null;
+    region?: string | null;
+    country_code?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    opening_hours?: string | null;
+    source_name?: string | null;
+    source_record_id?: string | null;
+    geocode_status?: string | null;
+    geocode_score?: number | null;
+    geocode_provider?: string | null;
+    finess?: string | null;
+    rpps?: string | null;
+    adeli?: string | null;
+    siret?: string | null;
+    last_updated_at?: string | null;
   };
 };
 

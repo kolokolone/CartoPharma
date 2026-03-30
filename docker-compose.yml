@@ -1,0 +1,14 @@
+services:
+  cartopharma:
+    image: ghcr.io/kolokolone/cartopharma:latest
+    container_name: cartopharma
+    ports:
+      - 3000:3000
+    environment:
+      CARTOPHARMA_DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+networks: {}

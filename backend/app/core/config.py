@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 APP_NAME = "CartoPharma API"
-APP_VERSION = "0.1.1"
+APP_VERSION = "0.1.2"
 
 
 def get_project_root() -> Path:
@@ -26,6 +26,17 @@ def get_database_path() -> Path:
     return get_data_dir() / "cartopharma.sqlite"
 
 
+def get_poi_database_path() -> Path:
+    raw = os.getenv("CARTOPHARMA_POI_DATABASE_URL", "").strip()
+    if raw.startswith("sqlite:///"):
+        return Path(raw.replace("sqlite:///", "", 1))
+    return get_data_dir() / "poi.sqlite"
+
+
+def get_csv_dir() -> Path:
+    return get_data_dir() / "csv"
+
+
 def get_logs_dir() -> Path:
     return get_data_dir() / "logs"
 
@@ -33,6 +44,7 @@ def get_logs_dir() -> Path:
 def ensure_runtime_dirs() -> None:
     for path in [
         get_data_dir(),
+        get_csv_dir(),
         get_data_dir() / "layers",
         get_data_dir() / "tmp",
         get_logs_dir(),

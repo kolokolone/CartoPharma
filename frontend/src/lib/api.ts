@@ -1,7 +1,8 @@
 import type {
   GeoPointCollectionResponse,
-  LayerId,
+   LayerId,
   LayersCatalogResponse,
+  MapBbox,
   SettingsPatch,
   SettingsResponse,
 } from '@/types/api';
@@ -62,9 +63,12 @@ export const settingsApi = {
 
 export const layersApi = {
   list: async () => apiRequest<LayersCatalogResponse>('/layers'),
-  points: async (layers: LayerId[]) => {
+  points: async (layers: LayerId[], bbox?: MapBbox | null) => {
     const sp = new URLSearchParams();
     layers.forEach((layerId) => sp.append('layers', layerId));
+    if (bbox) {
+      sp.set('bbox', bbox.join(','));
+    }
     const suffix = sp.toString();
     return apiRequest<GeoPointCollectionResponse>(`/layers/points${suffix ? `?${suffix}` : ''}`);
   },

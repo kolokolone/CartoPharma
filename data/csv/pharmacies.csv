@@ -1,0 +1,4 @@
+source_record_id,name,address_line_1,postal_code,city,department_code,region,country_code,phone,website,opening_hours,latitude,longitude,siret
+pharm-paris-rivoli,Pharmacie Rivoli,10 rue de Rivoli,75001,Paris,75,Ile-de-France,FR,0142000001,https://example.org/pharmacie-rivoli,"Mo-Fr 08:30-19:30; Sa 09:00-18:00",48.8566,2.3522,12345678900011
+pharm-lyon-terreaux,Pharmacie des Terreaux,18 place des Terreaux,69001,Lyon,69,Auvergne-Rhone-Alpes,FR,0472000002,https://example.org/pharmacie-terreaux,"Mo-Sa 08:30-19:00",45.764,4.8357,12345678900029
+pharm-marseille-republique,Pharmacie de la Republique,44 rue de la Republique,13002,Marseille,13,Provence-Alpes-Cote d'Azur,FR,0491000003,https://example.org/pharmacie-republique,"Mo-Sa 08:00-19:30",43.2965,5.3698,12345678900037

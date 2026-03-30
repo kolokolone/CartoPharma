@@ -1,13 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
+import type { LatLngBounds } from 'leaflet';
+import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 
-import type { GeoPointFeature, LayerId } from '@/types/api';
+import { PoiFeaturePopup } from '@/components/map/PoiFeaturePopup';
+
+import type { GeoPointFeature, LayerId, MapBbox } from '@/types/api';
 
 const FRANCE_CENTER: [number, number] = [46.603354, 1.888334];
 
-const LAYER_COLORS: Record<LayerId, string> = {
+const LAYER_COLORS: Record<string, string> = {
   pharmacies: '#1d4ed8',
   health_professionals: '#0f766e',
   public_transport: '#7c3aed',
@@ -19,9 +22,38 @@ type CartoMapLeafletProps = {
   points: GeoPointFeature[];
   activeLayers: LayerId[];
   height?: string;
+  onBboxChange?: (bbox: MapBbox) => void;
 };
 
-export function CartoMapLeaflet({ points, activeLayers, height = '560px' }: CartoMapLeafletProps) {
+function boundsToBbox(bounds: LatLngBounds): MapBbox {
+  const southWest = bounds.getSouthWest();
+  const northEast = bounds.getNorthEast();
+  return [southWest.lng, southWest.lat, northEast.lng, northEast.lat];
+}
+
+function MapViewportReporter({ onBboxChange }: { onBboxChange?: (bbox: MapBbox) => void }) {
+  const map = useMap();
+
+  const reportBounds = React.useCallback(() => {
+    if (!onBboxChange) {
+      return;
+    }
+    onBboxChange(boundsToBbox(map.getBounds()));
+  }, [map, onBboxChange]);
+
+  React.useEffect(() => {
+    reportBounds();
+  }, [reportBounds]);
+
+  useMapEvents({
+    moveend: reportBounds,
+    zoomend: reportBounds,
+  });
+
+  return null;
+}
+
+export function CartoMapLeaflet({ points, activeLayers, height = '560px', onBboxChange }: CartoMapLeafletProps) {
   const filteredPoints = React.useMemo(
     () => points.filter((feature) => activeLayers.includes(feature.properties.layer)),
     [activeLayers, points]
@@ -30,6 +62,7 @@ export function CartoMapLeaflet({ points, activeLayers, height = '560px' }: Cart
   return (
     <div className="overflow-hidden rounded-lg border" style={{ height }}>
       <MapContainer center={FRANCE_CENTER} zoom={6} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
+        <MapViewportReporter onBboxChange={onBboxChange} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -38,7 +71,8 @@ export function CartoMapLeaflet({ points, activeLayers, height = '560px' }: Cart
         {filteredPoints.map((feature) => {
           const [lon, lat] = feature.geometry.coordinates;
           const layer = feature.properties.layer;
-          const color = LAYER_COLORS[layer];
+          const color = feature.properties.layer_color ?? LAYER_COLORS[layer] ?? '#334155';
+          const title = feature.properties.display_name ?? feature.properties.name;
 
           return (
             <CircleMarker
@@ -52,14 +86,14 @@ export function CartoMapLeaflet({ points, activeLayers, height = '560px' }: Cart
                 weight: 1,
               }}
             >
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold">{feature.properties.name}</div>
+              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                <div className="min-w-[140px] text-xs">
+                  <div className="font-semibold text-foreground">{title}</div>
                   <div className="text-muted-foreground">{feature.properties.city}</div>
-                  <div className="mt-1 text-xs uppercase tracking-wide" style={{ color }}>
-                    {feature.properties.layer.replace('_', ' ')}
-                  </div>
                 </div>
+              </Tooltip>
+              <Popup>
+                <PoiFeaturePopup feature={feature} />
               </Popup>
             </CircleMarker>
           );

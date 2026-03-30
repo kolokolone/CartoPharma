@@ -13,6 +13,7 @@ from starlette.responses import JSONResponse
 from app.api import api_router
 from app.core.config import APP_NAME, APP_VERSION, ensure_runtime_dirs, get_cors_origins, get_logs_dir
 from app.db.database import init_database
+from app.db.poi_database import init_poi_database
 from app.models.schemas import ApiStatusResponse, HealthResponse
 
 
@@ -51,6 +52,7 @@ def configure_logging() -> logging.Logger:
 async def lifespan(app: FastAPI):
     app.state.logger = configure_logging()
     init_database()
+    init_poi_database()
     yield
 
 
