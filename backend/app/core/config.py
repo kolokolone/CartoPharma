@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 APP_NAME = "CartoPharma API"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.1"
 
 
 def get_project_root() -> Path:

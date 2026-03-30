@@ -1,4 +1,4 @@
-Modifications effectuees sur la phase de verification CartoPharma
+Modifications effectuees sur CartoPharma
 
 - ajout du dossier `data/`
 - ajout de `data/cartopharma.sqlite` via initialisation backend
@@ -7,3 +7,6 @@ Modifications effectuees sur la phase de verification CartoPharma
 - ajout d un `Dockerfile` multi-stage coherent frontend/backend
 - ajout et adaptation du dossier `docs/`
 - suppression des references residuelles au projet source dans les fichiers produits
+- mise a jour du `README.md` selon `docs/readme-doc.md`
+- version projet incrementee de `0.1.0` a `0.1.1`
+- ajout d un workflow GitHub Actions pour CI + build/push GHCR
