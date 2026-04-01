@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import type { GeoPointFeature } from '@/types/api';
 
 type PoiFeaturePopupProps = {
@@ -82,6 +84,17 @@ export function PoiFeaturePopup({ feature }: PoiFeaturePopupProps) {
         {!isPharmacy ? renderMeta('Source', properties.source_name) : null}
         {!isPharmacy ? renderMeta('Geocodage', properties.geocode_status) : null}
       </div>
+
+      {isPharmacy && properties.pharmacy_establishment_id ? (
+        <div className="border-t pt-3">
+          <Link
+            href={`/pharmacie/${properties.pharmacy_establishment_id}`}
+            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+          >
+            Voir la fiche
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,9 +1,13 @@
 import type {
+  FavoriteStatusResponse,
   GeoPointCollectionResponse,
   LayerId,
   LayersCatalogResponse,
   MapBbox,
+  PharmacyDetailResponse,
+  PharmacyNearbyPoiResponse,
   ReindexPoiResponse,
+  SearchResponse,
   SettingsPatch,
   SettingsResponse,
 } from '@/types/api';
@@ -77,4 +81,32 @@ export const layersApi = {
 
 export const indexingApi = {
   rebuildPoi: async () => apiRequest<ReindexPoiResponse>('/indexing/rebuild-poi', { method: 'POST' }),
+};
+
+export const searchApi = {
+  search: async (query: string, kind: 'suggestions' | 'results', limit = 20) => {
+    const sp = new URLSearchParams();
+    sp.set('q', query);
+    sp.set('kind', kind);
+    sp.set('limit', String(limit));
+    return apiRequest<SearchResponse>(`/search?${sp.toString()}`);
+  },
+};
+
+export const pharmaciesApi = {
+  detail: async (establishmentId: string) => apiRequest<PharmacyDetailResponse>(`/pharmacies/${establishmentId}`),
+  nearbyPoi: async (establishmentId: string, radiusM: number) => {
+    const sp = new URLSearchParams();
+    sp.set('radius_m', String(radiusM));
+    return apiRequest<PharmacyNearbyPoiResponse>(`/pharmacies/${establishmentId}/nearby-poi?${sp.toString()}`);
+  },
+  favoriteStatus: async (establishmentId: string) => apiRequest<FavoriteStatusResponse>(`/pharmacies/${establishmentId}/favorite`),
+  putFavorite: async (establishmentId: string) =>
+    apiRequest<FavoriteStatusResponse>(`/pharmacies/${establishmentId}/favorite`, {
+      method: 'PUT',
+    }),
+  deleteFavorite: async (establishmentId: string) =>
+    apiRequest<FavoriteStatusResponse>(`/pharmacies/${establishmentId}/favorite`, {
+      method: 'DELETE',
+    }),
 };

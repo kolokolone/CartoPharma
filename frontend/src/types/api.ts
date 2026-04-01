@@ -93,3 +93,98 @@ export type ReindexPoiResponse = {
   geocoded_pending: number;
   duration_ms: number;
 };
+
+export type PharmacyActivityResponse = {
+  function_label?: string | null;
+  registration_date?: string | null;
+  section_code?: string | null;
+  is_primary_activity: boolean;
+};
+
+export type PharmacyDegreeResponse = {
+  degree_label?: string | null;
+  degree_date?: string | null;
+  university?: string | null;
+  region?: string | null;
+};
+
+export type PharmacistDetailResponse = {
+  rpps: string;
+  title?: string | null;
+  last_name?: string | null;
+  first_name?: string | null;
+  first_registration_date?: string | null;
+  activities: PharmacyActivityResponse[];
+  degrees: PharmacyDegreeResponse[];
+};
+
+export type PharmacyDetailResponse = {
+  establishment_id: string;
+  establishment_type?: string | null;
+  display_name: string;
+  legal_name?: string | null;
+  address_line_1?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  department?: string | null;
+  region?: string | null;
+  phone?: string | null;
+  fax?: string | null;
+  website?: string | null;
+  opening_hours?: string | null;
+  siret?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  last_updated_at?: string | null;
+  is_favorite: boolean;
+  pharmacist_count: number;
+  pharmacists: PharmacistDetailResponse[];
+};
+
+export type FavoriteStatusResponse = {
+  establishment_id: string;
+  is_favorite: boolean;
+};
+
+export type PharmacyNearbyPoiItemResponse = {
+  id: string;
+  label: string;
+  secondary_label?: string | null;
+  layer_id: string;
+  layer_label: string;
+  category: string;
+  city?: string | null;
+  distance_m: number;
+  latitude: number;
+  longitude: number;
+  target_href: string;
+  pharmacy_establishment_id?: string | null;
+};
+
+export type PharmacyNearbyPoiResponse = {
+  establishment_id: string;
+  radius_m: number;
+  total_count: number;
+  items: PharmacyNearbyPoiItemResponse[];
+};
+
+export type SearchResultType = 'pharmacy' | 'poi' | 'city' | 'layer';
+
+export type SearchResultResponse = {
+  id: string;
+  result_type: SearchResultType;
+  label: string;
+  secondary_label?: string | null;
+  target_href: string;
+  pharmacy_establishment_id?: string | null;
+  layer_id?: string | null;
+  layer_label?: string | null;
+  city?: string | null;
+};
+
+export type SearchResponse = {
+  query: string;
+  kind: 'suggestions' | 'results';
+  total_count: number;
+  results: SearchResultResponse[];
+};

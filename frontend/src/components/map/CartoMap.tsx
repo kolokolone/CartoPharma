@@ -9,6 +9,10 @@ type CartoMapProps = {
   activeLayers: LayerId[];
   height?: string;
   onBboxChange?: (bbox: MapBbox) => void;
+  initialCenter?: [number, number];
+  initialZoom?: number;
+  interactive?: boolean;
+  highlightedPointId?: string;
 };
 
 const CartoMapLeaflet = dynamic(() => import('@/components/map/CartoMapLeaflet').then((m) => m.CartoMapLeaflet), {

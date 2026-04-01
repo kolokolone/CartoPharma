@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Layers, MapPinned, Settings } from 'lucide-react';
+import { ArrowRight, Layers, MapPinned, Search, Settings } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +22,9 @@ export default function HomePage() {
                 Ouvrir la carte
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/search">Lancer une recherche</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link href="/settings">Configurer l’affichage</Link>
@@ -52,6 +55,18 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="px-4 pb-4 text-sm text-muted-foreground">
             Registre de couches prêt pour la priorisation pharmacies et l’activation/désactivation par catégorie.
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="px-4 py-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Search className="h-4 w-4" />
+              Recherche transverse
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 text-sm text-muted-foreground">
+            Point d’entrée rapide vers les fiches pharmacie, les villes et les couches utiles.
           </CardContent>
         </Card>
 

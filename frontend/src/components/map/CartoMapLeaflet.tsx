@@ -23,6 +23,10 @@ type CartoMapLeafletProps = {
   activeLayers: LayerId[];
   height?: string;
   onBboxChange?: (bbox: MapBbox) => void;
+  initialCenter?: [number, number];
+  initialZoom?: number;
+  interactive?: boolean;
+  highlightedPointId?: string;
 };
 
 function boundsToBbox(bounds: LatLngBounds): MapBbox {
@@ -53,7 +57,29 @@ function MapViewportReporter({ onBboxChange }: { onBboxChange?: (bbox: MapBbox) 
   return null;
 }
 
-export function CartoMapLeaflet({ points, activeLayers, height = '560px', onBboxChange }: CartoMapLeafletProps) {
+function MapViewController({ center, zoom }: { center?: [number, number]; zoom?: number }) {
+  const map = useMap();
+
+  React.useEffect(() => {
+    if (!center) {
+      return;
+    }
+    map.setView(center, zoom ?? map.getZoom());
+  }, [center, map, zoom]);
+
+  return null;
+}
+
+export function CartoMapLeaflet({
+  points,
+  activeLayers,
+  height = '560px',
+  onBboxChange,
+  initialCenter,
+  initialZoom,
+  interactive = true,
+  highlightedPointId,
+}: CartoMapLeafletProps) {
   const filteredPoints = React.useMemo(
     () => points.filter((feature) => activeLayers.includes(feature.properties.layer)),
     [activeLayers, points]
@@ -61,8 +87,20 @@ export function CartoMapLeaflet({ points, activeLayers, height = '560px', onBbox
 
   return (
     <div className="overflow-hidden rounded-lg border" style={{ height }}>
-      <MapContainer center={FRANCE_CENTER} zoom={6} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
-        <MapViewportReporter onBboxChange={onBboxChange} />
+      <MapContainer
+        center={initialCenter ?? FRANCE_CENTER}
+        zoom={initialZoom ?? 6}
+        scrollWheelZoom={interactive}
+        dragging={interactive}
+        doubleClickZoom={interactive}
+        boxZoom={interactive}
+        keyboard={interactive}
+        touchZoom={interactive}
+        zoomControl={interactive}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <MapViewController center={initialCenter} zoom={initialZoom} />
+        {interactive ? <MapViewportReporter onBboxChange={onBboxChange} /> : null}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -78,12 +116,12 @@ export function CartoMapLeaflet({ points, activeLayers, height = '560px', onBbox
             <CircleMarker
               key={feature.properties.id}
               center={[lat, lon]}
-              radius={7}
+              radius={feature.properties.id === highlightedPointId ? 9 : 7}
               pathOptions={{
                 color,
                 fillColor: color,
-                fillOpacity: 0.8,
-                weight: 1,
+                fillOpacity: feature.properties.id === highlightedPointId ? 0.95 : 0.8,
+                weight: feature.properties.id === highlightedPointId ? 2 : 1,
               }}
             >
               <Tooltip direction="top" offset={[0, -10]} opacity={1}>

@@ -26,6 +26,11 @@ const STATIC_PAGE_METADATA: Record<string, PageMetadata> = {
     HeaderActions: MapHeaderActions,
     showToday: true,
   },
+  '/search': {
+    title: 'Recherche',
+    subtitle: 'Trouver rapidement une pharmacie, une ville ou une couche',
+    container: 'default',
+  },
   '/settings': {
     title: 'Paramètres',
     subtitle: 'Préférences d’affichage et comportement de carte',
@@ -48,5 +53,12 @@ function normalizePathname(pathname: string) {
 
 export function resolvePageMetadata(pathname: string): PageMetadata {
   const normalizedPathname = normalizePathname(pathname);
+  if (normalizedPathname.startsWith('/pharmacie/')) {
+    return {
+      title: 'Fiche pharmacie',
+      subtitle: 'Identité, équipe, proximité et actions rapides',
+      container: 'default',
+    };
+  }
   return STATIC_PAGE_METADATA[normalizedPathname] ?? FALLBACK_PAGE_METADATA;
 }

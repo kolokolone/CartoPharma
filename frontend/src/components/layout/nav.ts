@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Home, Map, Settings } from 'lucide-react';
+import { Home, Map, Search, Settings } from 'lucide-react';
 
 export type NavPlacement = 'main' | 'footer';
 
@@ -21,6 +21,12 @@ export const NAV_ITEMS: NavItemConfig[] = [
     label: 'Carte',
     href: '/map',
     icon: Map,
+    placement: 'main',
+  },
+  {
+    label: 'Recherche',
+    href: '/search',
+    icon: Search,
     placement: 'main',
   },
   {
