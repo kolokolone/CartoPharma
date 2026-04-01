@@ -150,6 +150,9 @@ Palette utilisee :
 Regles :
 - utiliser les tokens pour l UI structurelle
 - eviter les couleurs hardcodees sauf visualisation metier cartographique
+- pour la cartographie metier, la source de verite de la couleur doit etre `poi_layer.color`
+- une meme couleur de couche doit etre reutilisee pour le point carte, la pastille du panneau de couches, le badge de popup et les futurs reperes de detail
+- les couleurs hardcodees frontend ne sont autorisees qu en fallback de securite si la couleur backend manque
 
 ---
 
@@ -165,6 +168,9 @@ Regles :
 - panneau de couches dans une `Card`
 - architecture prete pour pharmacies, professionnels de sante, transports, commerces, points d interet
 - aucune zone de chalandise dans cette phase
+- la hierarchie couleur des couches doit rester coherente entre panneau, carte et popup
+- recommandation initiale de familles couleur : `pharmacies` en vert sante fort, `parapharmacies` en vert secondaire, `medecins_*` en bleu medical, les couches paramedicales en turquoise, `hopitaux` / `cliniques` / `urgences` en rouge, les couches medico-sociales en prune, les couches de sante annexe en cyan doux, les couches de mobilite en violet, les couches de flux commercial en orange, les couches de services publics et vie locale en gris bleute
+- le detail complet du rattachement couche -> famille couleur doit rester centralise dans `docs/liste_poi.md`
 - popup pharmacie :
   - `Pharmaciens` affiche le total sur une ligne de metadonnees au meme format que `Telephone`
   - `Type` pharmacie affiche sur une ligne de metadonnees simple

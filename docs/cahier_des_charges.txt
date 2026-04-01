@@ -6,11 +6,12 @@ Objectif : application cartographique sante/services inspiree du shell et de la 
 Fondation attendue :
 - backend FastAPI
 - frontend Next.js
-- routes : /, /map, /settings
+- routes : /, /map, /settings, /search
 - carte interactive fonctionnelle
 - architecture de couches extensible
 - documentation et scripts de lancement coherents
-- base SQLite dediee au projet
+- base SQLite dediee au projet (`cartopharma.sqlite`)
+- base SQLite dediee aux poi (`poi.sqlite`)
 
 Exclusions de cette phase :
 - zone de chalandise

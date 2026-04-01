@@ -1,202 +1,168 @@
-1. POI indispensables
+# Référentiel POI CartoPharma
 
-Ce sont les points à intégrer en premier.
+## 1. Objectif
 
-Concurrence directe
-Pharmacies d’officine
-Parapharmacies
-Pharmacies de centres commerciaux
-Pharmcies de gares / zones de flux
-Pharmacies de garde si tu veux analyser la couverture horaire
-Prescripteurs principaux
-Médecins généralistes
-Médecins spécialistes à fort impact ordonnance :
-pédiatres
-dermatologues
-cardiologues
-endocrinologues
-gynécologues
-ORL
-psychiatres
-ophtalmologues
-rhumatologues
-pneumologues
-neurologues
-gériatres
-Professionnels paramédicaux à fort lien officinal
-Infirmiers / cabinets infirmiers
-Masseurs-kinésithérapeutes
-Sages-femmes
-Orthophonistes
-Orthoptistes
-Pédicures-podologues
-Ergothérapeutes
-Psychomotriciens
-Établissements de soins
-Hôpitaux
-Cliniques
-Centres hospitaliers
-Services d’urgences
-Centres de dialyse
-Centres de cancérologie
-Maternités
-SSR / soins de suite
-HAD / hospitalisation à domicile
-Centres médicaux / polycliniques
-Biologie et diagnostic
-Laboratoires d’analyses médicales
-Centres d’imagerie
-Cabinets de radiologie
-IRM / scanner
-Centres de dépistage
-2. POI très utiles
+Ce document est la source de vérité documentaire pour les couches POI de CartoPharma.
 
-Ils ne sont pas toujours “obligatoires”, mais ils changent fortement la qualité de l’analyse.
+Il définit :
+- les domaines racine côté produit ;
+- les couches techniques (`layer_id`) à exposer dans la base et dans l'interface ;
+- les libellés métier attendus ;
+- la famille couleur associée à chaque domaine.
 
-Structures de santé de proximité
-Maisons de santé pluriprofessionnelles
-Centres de santé
-Cabinets médicaux groupés
-Permanences de soins
-Centres de vaccination
-Centres de PMI
-Centres de planification
-Dispensaires
-Centres de santé mentale / CMP
-Structures médico-sociales
-EHPAD
-Résidences seniors
-Foyers de vie
-MAS / FAM
-SSIAD
-SAAD / aides à domicile
-Centres pour personnes handicapées
-ESAT
-Centres de rééducation
-Santé visuelle et auditive
-Opticiens
-Audioprothésistes
-Centres d’audition
-Magasins de matériel médical / orthopédie
-Autres professionnels de santé
-Chirurgiens-dentistes
-Prothésistes dentaires
-Ostéopathes
-Chiropracteurs
-Diététiciens
-Psychologues
-Psychothérapeutes
-3. POI de flux et d’accessibilité
+## 2. Règles de structuration
 
-Ce sont eux qui expliquent souvent le trafic réel d’une officine.
+Le référentiel doit rester stable sur deux niveaux uniquement :
 
-Transports
-Arrêts de bus
-Stations de tram
-Stations de métro
-Gares SNCF
-Gares routières
-Stations de RER / TER
-Stations de vélos en libre-service
-Stations de taxi
-Parkings publics
-Parkings de centres commerciaux
-Pôles d’échange multimodaux
-Générateurs de passage
-Supermarchés / hypermarchés
-Centres commerciaux
-Supérettes
-Boulangeries à fort trafic
-Tabac / presse
-La Poste
-Banques
-Marchés
-Stations-service
-Restaurants rapides
-Galeries marchandes
-Équipements publics et quotidiens
-Mairies
-CPAM / CAF / France Services
-Centres des impôts
-Écoles
-Collèges
-Lycées
-Universités
-Crèches
-Médiathèques
-Salles de sport
-Piscines
-Stades
-Salles polyvalentes
+1. **domaine racine** : regroupement produit lisible par l'utilisateur ;
+2. **couche technique** : identifiant stable utilisé par l'import, la base et le frontend.
 
-4. Liste consolidée des POI à prévoir dans ta base /data/poi.sqlite
+Règles à respecter :
+- un `layer_id` est en `snake_case` ;
+- une couche appartient à un seul domaine racine ;
+- les variantes métier trop fines ne deviennent pas automatiquement de nouvelles couches ;
+- la couleur est définie au niveau de la couche et doit rester cohérente avec la famille de son domaine ;
+- une même famille couleur peut admettre des variantes de teinte par couche tant que la hiérarchie métier reste lisible ;
+- le même référentiel doit piloter l'import, le panneau de couches, la carte et les popups.
 
-Je te recommande ce référentiel de couches :
+## 3. Domaines racine
 
-Santé — concurrence
-pharmacies
-parapharmacies
-Santé — prescripteurs
-medecins_generalistes
-medecins_specialistes
-dentistes
-sages_femmes
-Santé — paramédical
-infirmiers
-kinesitherapeutes
-orthophonistes
-orthoptistes
-podologues
-ergotherapeutes
-psychomotriciens
-Santé — structures
-hopitaux
-cliniques
-urgences
-centres_de_sante
-maisons_de_sante
-laboratoires
-radiologie_imagerie
-centres_de_dialyse
-centres_de_cancerologie
-maternite
-ssr
-had
-Médico-social
-ehpad
-residences_seniors
-ssiad
-saad
-foyers_handicap
-centres_reeducation
-Santé annexe
-opticiens
-audioprothesistes
-materiel_medical
-orthopedie
-Mobilité
-arrets_bus
-stations_tram
-stations_metro
-gares
-parkings
-stations_velo
-taxis
-Flux commercial
-supermarches
-centres_commerciaux
-boulangeries
-tabac_presse
-poste
-banques
-marches
-stations_service
-Services publics et vie locale
-mairies
-cpam_caf_france_services
-ecoles
-colleges
-lycees
-universites
-creches
-equipements_sportifs
+- **Santé — concurrence** : vert santé ;
+- **Santé — prescripteurs** : bleu médical ;
+- **Santé — paramédical** : turquoise ;
+- **Santé — structures** : rouge santé ;
+- **Médico-social** : prune ;
+- **Santé annexe** : cyan doux ;
+- **Mobilité** : violet ;
+- **Flux commercial** : orange ;
+- **Services publics et vie locale** : gris bleuté.
+
+## 4. Référentiel consolidé des couches
+
+### Santé — concurrence
+
+Famille couleur : **vert santé**
+
+- `pharmacies` — Pharmacies d'officine
+- `parapharmacies` — Parapharmacies
+
+Notes :
+- les notions de pharmacie de garde, de gare ou de centre commercial doivent d'abord être traitées comme des attributs ou des sous-catégories de `pharmacies` ;
+- on évite de multiplier les couches tant qu'une source distincte et un usage produit clair ne le justifient pas.
+
+### Santé — prescripteurs
+
+Famille couleur : **bleu médical**
+
+- `medecins_generalistes` — Médecins généralistes
+- `medecins_specialistes` — Médecins spécialistes
+- `dentistes` — Chirurgiens-dentistes
+- `sages_femmes` — Sages-femmes
+
+### Santé — paramédical
+
+Famille couleur : **turquoise**
+
+- `infirmiers` — Infirmiers et cabinets infirmiers
+- `kinesitherapeutes` — Masseurs-kinésithérapeutes
+- `orthophonistes` — Orthophonistes
+- `orthoptistes` — Orthoptistes
+- `podologues` — Pédicures-podologues
+- `ergotherapeutes` — Ergothérapeutes
+- `psychomotriciens` — Psychomotriciens
+
+### Santé — structures
+
+Famille couleur : **rouge santé**
+
+- `hopitaux` — Hôpitaux
+- `cliniques` — Cliniques
+- `urgences` — Services d'urgences
+- `centres_de_sante` — Centres de santé
+- `maisons_de_sante` — Maisons de santé pluriprofessionnelles
+- `laboratoires` — Laboratoires d'analyses médicales
+- `radiologie_imagerie` — Radiologie et imagerie
+- `centres_de_dialyse` — Centres de dialyse
+- `centres_de_cancerologie` — Centres de cancérologie
+- `maternite` — Maternités
+- `ssr` — Soins de suite et de réadaptation
+- `had` — Hospitalisation à domicile
+
+### Médico-social
+
+Famille couleur : **prune**
+
+- `ehpad` — EHPAD
+- `residences_seniors` — Résidences seniors
+- `ssiad` — SSIAD
+- `saad` — SAAD
+- `foyers_handicap` — Foyers et structures handicap
+- `centres_reeducation` — Centres de rééducation
+
+### Santé annexe
+
+Famille couleur : **cyan doux**
+
+- `opticiens` — Opticiens
+- `audioprothesistes` — Audioprothésistes
+- `materiel_medical` — Matériel médical
+- `orthopedie` — Orthopédie
+
+### Mobilité
+
+Famille couleur : **violet**
+
+- `arrets_bus` — Arrêts de bus
+- `stations_tram` — Stations de tram
+- `stations_metro` — Stations de métro
+- `gares` — Gares
+- `parkings` — Parkings
+- `stations_velo` — Stations de vélo en libre-service
+- `taxis` — Stations de taxi
+
+### Flux commercial
+
+Famille couleur : **orange**
+
+- `supermarches` — Supermarchés et hypermarchés
+- `centres_commerciaux` — Centres commerciaux
+- `boulangeries` — Boulangeries à fort trafic
+- `tabac_presse` — Tabac et presse
+- `poste` — La Poste
+- `banques` — Banques
+- `marches` — Marchés
+- `stations_service` — Stations-service
+
+### Services publics et vie locale
+
+Famille couleur : **gris bleuté**
+
+- `mairies` — Mairies
+- `cpam_caf_france_services` — CPAM, CAF et France Services
+- `ecoles` — Écoles
+- `colleges` — Collèges
+- `lycees` — Lycées
+- `universites` — Universités
+- `creches` — Crèches
+- `equipements_sportifs` — Équipements sportifs
+
+## 5. Conséquences d'implémentation
+
+Ce référentiel doit piloter directement :
+- les `layer_id` importés en base ;
+- les libellés visibles dans le panneau de couches ;
+- les couleurs portées par `poi_layer.color` ;
+- la documentation d'indexation et de parsing des sources ;
+- les badges et repères visuels de la carte.
+
+## 6. Cas particuliers à traiter comme attributs
+
+Sauf décision produit explicite contraire, les cas suivants ne doivent pas créer une nouvelle couche dédiée :
+
+- pharmacie de garde ;
+- pharmacie en gare ;
+- pharmacie en centre commercial ;
+- activité principale ou secondaire d'un professionnel ;
+- établissement public ou privé quand l'information peut vivre comme attribut.
+
+La règle générale est de conserver des couches lisibles, stables et réutilisables, puis de porter la granularité fine dans les attributs métier.

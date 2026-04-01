@@ -81,6 +81,13 @@
 - `region`
 - `phone`
 - `fax`
+- `website`
+- `opening_hours`
+- `siret`
+- `latitude`
+- `longitude`
+- `last_updated_at`
+- `is_favorite`
 - `pharmacist_count`
 - `pharmacists[]`
   - `rpps`
@@ -90,3 +97,42 @@
   - `first_registration_date`
   - `activities[]`
   - `degrees[]`
+
+### `GET /api/v1/pharmacies/{establishment_id}/nearby-poi`
+- `establishment_id`
+- `radius_m`
+- `total_count`
+- `items[]`
+  - `id`
+  - `label`
+  - `secondary_label`
+  - `layer_id`
+  - `layer_label`
+  - `category`
+  - `city`
+  - `distance_m`
+  - `latitude`
+  - `longitude`
+  - `target_href`
+  - `pharmacy_establishment_id`
+
+### `GET /api/v1/pharmacies/{establishment_id}/favorite`
+### `PUT /api/v1/pharmacies/{establishment_id}/favorite`
+### `DELETE /api/v1/pharmacies/{establishment_id}/favorite`
+- `establishment_id`
+- `is_favorite`
+
+### `GET /api/v1/search`
+- `query`
+- `kind`
+- `total_count`
+- `results[]`
+  - `id`
+  - `result_type`
+  - `label`
+  - `secondary_label`
+  - `target_href`
+  - `pharmacy_establishment_id`
+  - `layer_id`
+  - `layer_label`
+  - `city`
