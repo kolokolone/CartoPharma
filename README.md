@@ -5,7 +5,7 @@ Le depot contient un backend FastAPI, un frontend Next.js et une base SQLite run
 
 ## Statut actuel
 
-- version courante : `0.1.4`
+- version courante : `0.1.5`
 - perimetre : France uniquement
 - socle fonctionnel disponible : frontend, backend, carte Leaflet, couches activables, settings persistants
 - indexation metier disponible : lot pharmacie specialise + projection cartographique enrichie
@@ -20,9 +20,14 @@ Le depot contient un backend FastAPI, un frontend Next.js et une base SQLite run
 - import specialise des pharmacies depuis `data/csv/pharmacies/*.csv`
 - endpoint de reindexation backend `POST /api/v1/indexing/rebuild-poi`
 - endpoint de detail pharmacie `GET /api/v1/pharmacies/{establishment_id}`
+- endpoint de recherche transverse `GET /api/v1/search`
+- endpoints favoris pharmacie `GET|PUT|DELETE /api/v1/pharmacies/{establishment_id}/favorite`
+- endpoint de POI proches `GET /api/v1/pharmacies/{establishment_id}/nearby-poi`
 - persistance SQLite des settings d affichage
 - page d accueil `/`
 - page carte `/map`
+- page recherche `/search`
+- page detail pharmacie `/pharmacie/[id]`
 - page parametres `/settings` avec relance de la reindexation POI
 - carte Leaflet avec panneau d activation/desactivation des couches
 
@@ -117,6 +122,8 @@ Routes frontend :
 
 - `/`
 - `/map`
+- `/search`
+- `/pharmacie/[id]`
 - `/settings`
 
 ## API principale
@@ -129,7 +136,12 @@ Routes frontend :
 - `POST /api/v1/indexing/rebuild-poi`
 - `GET /api/v1/layers`
 - `GET /api/v1/layers/points`
+- `GET /api/v1/search`
 - `GET /api/v1/pharmacies/{establishment_id}`
+- `GET /api/v1/pharmacies/{establishment_id}/nearby-poi`
+- `GET /api/v1/pharmacies/{establishment_id}/favorite`
+- `PUT /api/v1/pharmacies/{establishment_id}/favorite`
+- `DELETE /api/v1/pharmacies/{establishment_id}/favorite`
 
 ## Donnees et base de donnees
 
@@ -137,6 +149,7 @@ Routes frontend :
 - base POI dediee : `data/poi.sqlite`
 - logs backend : `data/logs/`
 - repertoires runtime : `data/layers/`, `data/tmp/`
+- favoris persistants : table `favorite_pharmacy` dans `data/cartopharma.sqlite`
 - projection pharmacie : `pharmacy_establishment`, `pharmacist`, `pharmacist_activity`, `pharmacist_degree` + projection dans `poi`
 - points exposes : couches mixtes entre projection reelle et fallback mock selon les donnees disponibles
 
@@ -165,5 +178,4 @@ Routes frontend :
 
 - geocodage d'adresse batch via la Geoplateforme pour les lignes sans coordonnees source
 - pas de calcul de zone de chalandise
-- pas encore de page frontend `/pharmacie/[id]`
 - les autres couches restent encore largement en base mockee pour la V1 fondation

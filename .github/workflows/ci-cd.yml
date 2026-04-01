@@ -29,11 +29,12 @@ jobs:
           import pathlib
           import sys
           sys.path.insert(0, str(pathlib.Path('backend').resolve()))
+          from app.core.config import APP_VERSION
           from app.main import app
           routes = {route.path for route in app.routes}
           assert '/health' in routes
           assert '/api/v1/layers' in routes
-          assert app.version == '0.1.4'
+          assert app.version == APP_VERSION
           PY
 
       - name: Setup Node
