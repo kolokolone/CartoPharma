@@ -135,6 +135,33 @@ class PharmacistDetailResponse(BaseModel):
     degrees: list[PharmacyDegreeResponse] = Field(default_factory=list)
 
 
+class FavoriteStatusResponse(BaseModel):
+    establishment_id: str
+    is_favorite: bool = False
+
+
+class PharmacyNearbyPoiItemResponse(BaseModel):
+    id: str
+    label: str
+    secondary_label: str | None = None
+    layer_id: str
+    layer_label: str
+    category: str
+    city: str | None = None
+    distance_m: int = Field(ge=0)
+    latitude: float
+    longitude: float
+    target_href: str
+    pharmacy_establishment_id: str | None = None
+
+
+class PharmacyNearbyPoiResponse(BaseModel):
+    establishment_id: str
+    radius_m: int = Field(ge=1)
+    total_count: int = Field(ge=0)
+    items: list[PharmacyNearbyPoiItemResponse] = Field(default_factory=list)
+
+
 class PharmacyDetailResponse(BaseModel):
     establishment_id: str
     establishment_type: str | None = None
@@ -147,5 +174,31 @@ class PharmacyDetailResponse(BaseModel):
     region: str | None = None
     phone: str | None = None
     fax: str | None = None
+    website: str | None = None
+    opening_hours: str | None = None
+    siret: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    last_updated_at: str | None = None
+    is_favorite: bool = False
     pharmacist_count: int = Field(ge=0)
     pharmacists: list[PharmacistDetailResponse] = Field(default_factory=list)
+
+
+class SearchResultResponse(BaseModel):
+    id: str
+    result_type: Literal["pharmacy", "poi", "city", "layer"]
+    label: str
+    secondary_label: str | None = None
+    target_href: str
+    pharmacy_establishment_id: str | None = None
+    layer_id: str | None = None
+    layer_label: str | None = None
+    city: str | None = None
+
+
+class SearchResponse(BaseModel):
+    query: str
+    kind: Literal["suggestions", "results"]
+    total_count: int = Field(ge=0)
+    results: list[SearchResultResponse] = Field(default_factory=list)

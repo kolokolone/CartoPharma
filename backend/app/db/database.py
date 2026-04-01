@@ -42,6 +42,14 @@ def init_database() -> Path:
             """,
             (utc_now_iso(),),
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS favorite_pharmacy (
+                establishment_id TEXT PRIMARY KEY,
+                created_at_utc TEXT NOT NULL
+            )
+            """
+        )
         connection.commit()
 
     return db_path

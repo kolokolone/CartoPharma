@@ -12,8 +12,15 @@ from fastapi import HTTPException
 
 from app.api.routes.indexing import rebuild_poi_route
 from app.api.routes.layers import get_layer_points
-from app.api.routes.pharmacies import get_pharmacy_detail_route
-from app.db.database import utc_now_iso
+from app.api.routes.pharmacies import (
+    delete_pharmacy_favorite_route,
+    get_pharmacy_detail_route,
+    get_pharmacy_favorite_route,
+    get_pharmacy_nearby_poi_route,
+    put_pharmacy_favorite_route,
+)
+from app.api.routes.search import search_route
+from app.db.database import init_database, utc_now_iso
 from app.db.poi_database import connect_poi, init_poi_database
 from app.db.poi_repository import PoiBoundingBox, list_poi_layers, list_poi_points
 from app.services.poi_geocoding import synchronize_geocode_statuses
@@ -72,6 +79,7 @@ class PoiPipelineTests(unittest.TestCase):
         )
 
     def test_rebuilds_catalog_with_specialized_pharmacy_directory(self) -> None:
+        init_database()
         init_poi_database()
         report = rebuild_poi_database()
 
@@ -105,6 +113,7 @@ class PoiPipelineTests(unittest.TestCase):
         self.assertEqual(indexed, 3)
 
     def test_routes_expose_enriched_pharmacy_payloads(self) -> None:
+        init_database()
         init_poi_database()
         rebuild_poi_database()
 
@@ -123,8 +132,99 @@ class PoiPipelineTests(unittest.TestCase):
         self.assertEqual(detail.pharmacist_count, 2)
         self.assertEqual(len(detail.pharmacists), 2)
         self.assertEqual(detail.pharmacists[0].activities[0].function_label, 'Adjoint')
+        self.assertEqual(detail.website, 'https://example.org/pharm1')
+        self.assertEqual(detail.opening_hours, 'Mo-Sa 09:00-19:00')
+        self.assertEqual(detail.siret, '11111111111111')
+        self.assertAlmostEqual(detail.latitude or 0, 48.8566)
+        self.assertAlmostEqual(detail.longitude or 0, 2.3522)
+        self.assertFalse(detail.is_favorite)
+
+    def test_pharmacy_nearby_poi_and_favorite_routes(self) -> None:
+        init_database()
+        init_poi_database()
+        rebuild_poi_database()
+
+        timestamp = utc_now_iso()
+        with closing(connect_poi()) as connection:
+            connection.execute(
+                """
+                INSERT INTO poi (
+                    source_name, source_record_id, layer_id, name, display_name, address_line_1, postal_code, city,
+                    department_code, region, country_code, phone, website, opening_hours, pharmacy_establishment_id,
+                    pharmacist_count, pharmacy_type, latitude, longitude, geocode_status, geocode_score,
+                    geocode_provider, raw_address, normalized_address, is_active, last_seen_at_utc, created_at_utc, updated_at_utc
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+                """,
+                (
+                    'manual_test',
+                    'nearby-pharmacy-test',
+                    'shops',
+                    'Commerce Paris Centre',
+                    'Commerce Paris Centre',
+                    '10 rue de Rivoli',
+                    '75001',
+                    'Paris',
+                    '75',
+                    'Ile-de-France',
+                    'FR',
+                    None,
+                    None,
+                    None,
+                    None,
+                    0,
+                    None,
+                    48.8571,
+                    2.353,
+                    'resolved',
+                    1.0,
+                    'manual_test',
+                    '10 rue de Rivoli, 75001 Paris',
+                    '10 rue de Rivoli, 75001 Paris',
+                    timestamp,
+                    timestamp,
+                    timestamp,
+                ),
+            )
+            connection.commit()
+
+        nearby = asyncio.run(get_pharmacy_nearby_poi_route('ETAB-001', radius_m=1000))
+        self.assertEqual(nearby.establishment_id, 'ETAB-001')
+        self.assertGreaterEqual(nearby.total_count, 1)
+        self.assertEqual(nearby.items[0].layer_id, 'shops')
+        self.assertEqual(nearby.items[0].target_href, '/map')
+
+        favorite_before = asyncio.run(get_pharmacy_favorite_route('ETAB-001'))
+        self.assertFalse(favorite_before.is_favorite)
+
+        favorite_after_put = asyncio.run(put_pharmacy_favorite_route('ETAB-001'))
+        self.assertTrue(favorite_after_put.is_favorite)
+
+        detail = asyncio.run(get_pharmacy_detail_route('ETAB-001'))
+        self.assertTrue(detail.is_favorite)
+
+        favorite_after_delete = asyncio.run(delete_pharmacy_favorite_route('ETAB-001'))
+        self.assertFalse(favorite_after_delete.is_favorite)
+
+    def test_search_route_prioritizes_exact_pharmacy_identifier(self) -> None:
+        init_database()
+        init_poi_database()
+        rebuild_poi_database()
+
+        exact = asyncio.run(search_route(q='ETAB-001', kind='results', limit=10))
+        self.assertGreaterEqual(exact.total_count, 1)
+        self.assertEqual(exact.results[0].result_type, 'pharmacy')
+        self.assertEqual(exact.results[0].pharmacy_establishment_id, 'ETAB-001')
+        self.assertEqual(exact.results[0].target_href, '/pharmacie/ETAB-001')
+
+        empty = asyncio.run(search_route(q='x', kind='suggestions', limit=5))
+        self.assertEqual(empty.total_count, 0)
+        self.assertEqual(empty.results, [])
+
+        city = asyncio.run(search_route(q='Paris', kind='results', limit=10))
+        self.assertTrue(any(result.result_type == 'city' for result in city.results))
 
     def test_rebuild_endpoint_returns_structured_report(self) -> None:
+        init_database()
         init_poi_database()
 
         response = asyncio.run(rebuild_poi_route())
@@ -135,6 +235,7 @@ class PoiPipelineTests(unittest.TestCase):
         self.assertEqual(response.poi_rows_rebuilt, 3)
 
     def test_legacy_root_pharmacies_csv_is_ignored(self) -> None:
+        init_database()
         init_poi_database()
 
         report = rebuild_poi_database()
@@ -144,6 +245,7 @@ class PoiPipelineTests(unittest.TestCase):
         self.assertEqual([layer['id'] for layer in layers], ['pharmacies', 'shops'])
 
     def test_rebuild_removes_stale_layers_when_csv_disappears(self) -> None:
+        init_database()
         init_poi_database()
         first_report = rebuild_poi_database()
         self.assertEqual(first_report.poi_rows_rebuilt, 3)
@@ -160,6 +262,7 @@ class PoiPipelineTests(unittest.TestCase):
 
     @patch('app.services.poi_geocoding.requests.post')
     def test_batch_geocoding_resolves_pending_points(self, requests_post: Mock) -> None:
+        init_database()
         init_poi_database()
         timestamp = utc_now_iso()
 

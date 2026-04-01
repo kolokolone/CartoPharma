@@ -3,8 +3,12 @@ from __future__ import annotations
 from contextlib import closing
 from pathlib import Path
 
+from app.db.favorites_repository import is_pharmacy_favorite
+from app.db.poi_repository import list_poi_nearby_pharmacy
 from app.db.poi_database import connect_poi
 from app.models.schemas import (
+    PharmacyNearbyPoiItemResponse,
+    PharmacyNearbyPoiResponse,
     PharmacistDetailResponse,
     PharmacyActivityResponse,
     PharmacyDegreeResponse,
@@ -70,6 +74,18 @@ def get_pharmacy_details(establishment_id: str, database_path: Path | None = Non
             (establishment_id,),
         ).fetchall()
 
+        poi_row = connection.execute(
+            """
+            SELECT website, opening_hours, siret, latitude, longitude, updated_at_utc
+            FROM poi
+            WHERE pharmacy_establishment_id = ?
+              AND is_active = 1
+            ORDER BY updated_at_utc DESC
+            LIMIT 1
+            """,
+            (establishment_id,),
+        ).fetchone()
+
     pharmacists: dict[str, PharmacistDetailResponse] = {
         row["rpps"]: PharmacistDetailResponse(
             rpps=row["rpps"],
@@ -121,6 +137,64 @@ def get_pharmacy_details(establishment_id: str, database_path: Path | None = Non
         region=establishment["region"],
         phone=establishment["phone"],
         fax=establishment["fax"],
+        website=poi_row["website"] if poi_row is not None else None,
+        opening_hours=poi_row["opening_hours"] if poi_row is not None else None,
+        siret=poi_row["siret"] if poi_row is not None else None,
+        latitude=float(poi_row["latitude"]) if poi_row is not None and poi_row["latitude"] is not None else None,
+        longitude=float(poi_row["longitude"]) if poi_row is not None and poi_row["longitude"] is not None else None,
+        last_updated_at=poi_row["updated_at_utc"] if poi_row is not None else None,
+        is_favorite=is_pharmacy_favorite(establishment_id),
         pharmacist_count=int(pharmacist_count),
         pharmacists=list(pharmacists.values()),
+    )
+
+
+def get_pharmacy_nearby_poi(
+    establishment_id: str,
+    *,
+    radius_m: int = 1000,
+    database_path: Path | None = None,
+) -> PharmacyNearbyPoiResponse | None:
+    pharmacy = get_pharmacy_details(establishment_id, database_path=database_path)
+    if pharmacy is None:
+        return None
+
+    if pharmacy.latitude is None or pharmacy.longitude is None:
+        return PharmacyNearbyPoiResponse(
+            establishment_id=establishment_id,
+            radius_m=radius_m,
+            total_count=0,
+            items=[],
+        )
+
+    items = [
+        PharmacyNearbyPoiItemResponse(
+            id=str(row["id"]),
+            label=str(row["label"]),
+            secondary_label=row["secondary_label"] if isinstance(row["secondary_label"], str) else None,
+            layer_id=str(row["layer_id"]),
+            layer_label=str(row["layer_label"]),
+            category=str(row["category"]),
+            city=row["city"] if isinstance(row["city"], str) else None,
+            distance_m=row["distance_m"] if isinstance(row["distance_m"], int) else 0,
+            latitude=float(row["latitude"]) if isinstance(row["latitude"], (int, float)) else 0.0,
+            longitude=float(row["longitude"]) if isinstance(row["longitude"], (int, float)) else 0.0,
+            target_href=str(row["target_href"]),
+            pharmacy_establishment_id=(
+                row["pharmacy_establishment_id"]
+                if isinstance(row["pharmacy_establishment_id"], str)
+                else None
+            ),
+        )
+        for row in list_poi_nearby_pharmacy(
+            establishment_id,
+            radius_m=radius_m,
+            database_path=database_path,
+        )
+    ]
+    return PharmacyNearbyPoiResponse(
+        establishment_id=establishment_id,
+        radius_m=radius_m,
+        total_count=len(items),
+        items=items,
     )
