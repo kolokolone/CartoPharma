@@ -3,9 +3,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from app import __version__
+
 
 APP_NAME = "CartoPharma API"
-APP_VERSION = "0.1.5"
+APP_VERSION = __version__
 
 
 def get_project_root() -> Path:
